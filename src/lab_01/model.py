@@ -1,3 +1,11 @@
+
+from validate import (
+    validate_connections,
+    validate_ip,
+    validate_name,
+    validate_status
+)
+
 class Server:
     #Атрибут
     total_servers = 0
@@ -13,10 +21,10 @@ class Server:
         self._active = True  # НОВОЕ СОСТОЯНИЕ
         
         #Вызов валидаций и сеттеров
-        self._validate_name(name)
-        self._validate_ip(ip)
-        self._validate_status(status)
-        self._validate_connections(connections)
+        self.validate_name(name)
+        self.validate_ip(ip)
+        self.validate_status(status)
+        self.validate_connections(connections)
         
         self.name = name
         self.ip = ip
@@ -24,43 +32,6 @@ class Server:
         self.connections = connections
         
         Server.total_servers += 1
-    
-    #Валидация 
-    
-    def _validate_name(self, value):
-        if not isinstance(value, str):
-            raise TypeError("Имя должно быть строкой")
-        if not value.strip():
-            raise ValueError("Имя не может быть пустым")
-        return True
-    
-    def _validate_ip(self, value):
-        if not isinstance(value, str):
-            raise TypeError("IP должен быть строкой")
-        parts = value.split('.')
-        if len(parts) != 4:
-            raise ValueError("Неверный формат IP")
-        for part in parts:
-            if not part.isdigit() or not (0 <= int(part) <= 255):
-                raise ValueError("IP должен быть в формате xxx.xxx.xxx.xxx")
-        return True
-    
-    def _validate_status(self, value):
-        if not isinstance(value, str):
-            raise TypeError("Статус должен быть строкой")
-        allowed = ["online", "offline", "maintenance"]
-        if value not in allowed:
-            raise ValueError(f"Статус должен быть одним из: {allowed}")
-        return True
-    
-    def _validate_connections(self, value):
-        if not isinstance(value, (int, float)):
-            raise TypeError("Количество подключений должно быть числом")
-        if value < 0:
-            raise ValueError("Количество подключений не может быть отрицательным")
-        if value > Server.max_connections:
-            raise ValueError(f"Превышен лимит подключений ({Server.max_connections})")
-        return True
     
     #Свойства
     
@@ -70,7 +41,7 @@ class Server:
     
     @name.setter
     def name(self, value):
-        self._validate_name(value)#Метод отдельный
+        self.validate_name(value)#Метод отдельный
         self._name = value.strip()
     
     @property
@@ -79,7 +50,7 @@ class Server:
     
     @ip.setter
     def ip(self, value):
-        self._validate_ip(value)#Вызов отдел метода
+        self.validate_ip(value)#Вызов отдел метода
         self._ip = value
     
     @property
@@ -88,7 +59,7 @@ class Server:
     
     @status.setter
     def status(self, value):
-        self._validate_status(value)#Вызов 
+        self.validate_status(value)#Вызов 
         self._status = value
     
     @property
@@ -97,7 +68,7 @@ class Server:
     
     @connections.setter
     def connections(self, value):
-        self._validate_connections(value)#Вызов
+        self.validate_connections(value)#Вызов
         self._connections = int(value)
     
     #Новые методы для состояния
@@ -183,3 +154,5 @@ class Server:
     
         self._status = old_status
         return f"Сервер {self._name} перезагружен"
+    
+object = Server(name="strtr", ip=192.192, connections=3)
