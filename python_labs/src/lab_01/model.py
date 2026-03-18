@@ -1,0 +1,185 @@
+class Server:
+    #Атрибут
+    total_servers = 0
+    #Доп атрибут
+    max_connections = 1000
+    
+    def __init__(self, name, ip, status="offline", connections=0):
+        #Создание по типу пустых папок
+        self._name = None
+        self._ip = None
+        self._status = None
+        self._connections = None
+        self._active = True  # НОВОЕ СОСТОЯНИЕ
+        
+        #Вызов валидаций и сеттеров
+        self._validate_name(name)
+        self._validate_ip(ip)
+        self._validate_status(status)
+        self._validate_connections(connections)
+        
+        self.name = name
+        self.ip = ip
+        self.status = status
+        self.connections = connections
+        
+        Server.total_servers += 1
+    
+    #Валидация 
+    
+    def _validate_name(self, value):
+        if not isinstance(value, str):
+            raise TypeError("Имя должно быть строкой")
+        if not value.strip():
+            raise ValueError("Имя не может быть пустым")
+        return True
+    
+    def _validate_ip(self, value):
+        if not isinstance(value, str):
+            raise TypeError("IP должен быть строкой")
+        parts = value.split('.')
+        if len(parts) != 4:
+            raise ValueError("Неверный формат IP")
+        for part in parts:
+            if not part.isdigit() or not (0 <= int(part) <= 255):
+                raise ValueError("IP должен быть в формате xxx.xxx.xxx.xxx")
+        return True
+    
+    def _validate_status(self, value):
+        if not isinstance(value, str):
+            raise TypeError("Статус должен быть строкой")
+        allowed = ["online", "offline", "maintenance"]
+        if value not in allowed:
+            raise ValueError(f"Статус должен быть одним из: {allowed}")
+        return True
+    
+    def _validate_connections(self, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError("Количество подключений должно быть числом")
+        if value < 0:
+            raise ValueError("Количество подключений не может быть отрицательным")
+        if value > Server.max_connections:
+            raise ValueError(f"Превышен лимит подключений ({Server.max_connections})")
+        return True
+    
+    #Свойства
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @name.setter
+    def name(self, value):
+        self._validate_name(value)#Метод отдельный
+        self._name = value.strip()
+    
+    @property
+    def ip(self):
+        return self._ip
+    
+    @ip.setter
+    def ip(self, value):
+        self._validate_ip(value)#Вызов отдел метода
+        self._ip = value
+    
+    @property
+    def status(self):
+        return self._status
+    
+    @status.setter
+    def status(self, value):
+        self._validate_status(value)#Вызов 
+        self._status = value
+    
+    @property
+    def connections(self):
+        return self._connections
+    
+    @connections.setter
+    def connections(self, value):
+        self._validate_connections(value)#Вызов
+        self._connections = int(value)
+    
+    #Новые методы для состояния
+    
+    def activate(self):
+        """Активировать сервер"""
+        if not self._active:
+            self._active = True
+            return f"Сервер {self._name} активирован"
+        return f"Сервер {self._name} уже активен"
+    
+    def deactivate(self):
+        """Деактивировать сервер"""
+        if self._active:
+            if self._connections > 0:
+                raise Exception(f"Нельзя деактивировать: есть активные подключения ({self._connections})")
+            self._active = False
+            return f"Сервер {self._name} деактивирован"
+        return f"Сервер {self._name} уже неактивен"
+    
+    def is_active(self):
+        """Проверка активности"""
+        return self._active
+    
+    
+    
+    def __str__(self):
+        if self._active:
+            active_status = "АКТИВЕН"
+        else:
+            active_status = "НЕАКТИВЕН" 
+        return (f"{self._name} ({self._ip}) - {self._status} | "
+                f"Подключений: {self._connections} | {active_status}")
+    
+    def __repr__(self):
+        return (f"Server(name='{self._name}', ip='{self._ip}', "
+                f"status='{self._status}', connections={self._connections})")
+    
+    def __eq__(self, other):
+        if not isinstance(other, Server):
+            return False
+        return (self._ip == other._ip) and (self._name == other._name)
+    
+    #Бизнес метод
+    
+    
+    def ping(self):
+        """Проверка доступности"""
+        if not self._active:
+            return f"Сервер {self._name} НЕАКТИВЕН, пинг невозможен"
+        return f"Сервер {self._name} отвечает. Статус: {self._status}"
+    
+    def connect(self):
+        """Подключение к серверу"""
+        if not self._active:
+            raise Exception(f"Нельзя подключиться: сервер {self._name} неактивен")
+        if self._status != "online":
+            raise Exception(f"Нельзя подключиться: сервер {self._status}")
+        if self._connections >= Server.max_connections:
+            raise Exception(f"Достигнут лимит подключений ({Server.max_connections})")
+        
+        self._connections += 1
+        return f"Подключено к {self._name}. Текущие подключения: {self._connections}"
+    
+    def disconnect(self):
+        """Отключение от сервера"""
+        if self._connections <= 0:
+            raise Exception("Нет активных подключений")
+        self._connections -= 1
+        return f"Отключено от {self._name}. Осталось подключений: {self._connections}"
+    
+    def restart(self):
+        """Перезагрузка сервера"""
+        if self._connections > 0:
+            raise Exception(f"Нельзя перезагрузить: {self._connections} активных подключений")
+    
+        old_status = self._status
+        self._status = "maintenance"
+    
+        #Имитация перезагрузки 
+        import time
+        time.sleep(3)  
+    
+        self._status = old_status
+        return f"Сервер {self._name} перезагружен"
