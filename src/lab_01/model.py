@@ -155,4 +155,3 @@ class Server:
         self._status = old_status
         return f"Сервер {self._name} перезагружен"
     
-object = Server(name="strtr", ip=192.192, connections=3)
