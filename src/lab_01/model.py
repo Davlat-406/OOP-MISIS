@@ -1,39 +1,22 @@
-
 from validate import (
-    validate_connections,
-    validate_ip,
     validate_name,
-    validate_status
+    validate_ip,
+    validate_connections,
+    validate_status,
+    validate_active
 )
+import time
 
-class Server:
-    #Атрибут
-    total_servers = 0
-    #Доп атрибут
-    max_connections = 1000
+class Server():
     
-    def __init__(self, name, ip, status="offline", connections=0):
-        #Создание по типу пустых папок
-        self._name = None
-        self._ip = None
-        self._status = None
-        self._connections = None
-        self._active = True  # НОВОЕ СОСТОЯНИЕ
+    def __init__(self, name: str, ip: int, active: bool, connections: int = 0, status: str = "Offline", max_connections: int = 64):
         
-        #Вызов валидаций и сеттеров
-        self.validate_name(name)
-        self.validate_ip(ip)
-        self.validate_status(status)
-        self.validate_connections(connections)
-        
-        self.name = name
-        self.ip = ip
-        self.status = status
-        self.connections = connections
-        
-        Server.total_servers += 1
-    
-    #Свойства
+        self._name = name
+        self._ip = ip
+        self._active = active
+        self._connections = connections
+        self._status = status
+        self._max_connections = max_connections
     
     @property
     def name(self):
@@ -41,8 +24,11 @@ class Server:
     
     @name.setter
     def name(self, value):
-        self.validate_name(value)#Метод отдельный
-        self._name = value.strip()
+        
+        if not validate_name(value):
+            raise ValueError
+        
+        self._name = value
     
     @property
     def ip(self):
@@ -50,17 +36,23 @@ class Server:
     
     @ip.setter
     def ip(self, value):
-        self.validate_ip(value)#Вызов отдел метода
-        self._ip = value
+        
+        if not validate_ip(value):
+            raise ValueError
+        
+        self._name = value
     
     @property
-    def status(self):
-        return self._status
+    def active(self):
+        return self._active
     
-    @status.setter
-    def status(self, value):
-        self.validate_status(value)#Вызов 
-        self._status = value
+    @active.setter
+    def active(self, value):
+        
+        if not validate_active(value):
+            raise ValueError
+        
+        self._name = value
     
     @property
     def connections(self):
@@ -68,67 +60,56 @@ class Server:
     
     @connections.setter
     def connections(self, value):
-        self.validate_connections(value)#Вызов
-        self._connections = int(value)
+        
+        if not validate_connections(value):
+            raise ValueError
+        
+        self._name = value
+    @property
+    def status(self):
+        return self._status
     
-    #Новые методы для состояния
-    
-    def activate(self):
-        """Активировать сервер"""
-        if not self._active:
-            self._active = True
-            return f"Сервер {self._name} активирован"
-        return f"Сервер {self._name} уже активен"
-    
-    def deactivate(self):
-        """Деактивировать сервер"""
-        if self._active:
-            if self._connections > 0:
-                raise Exception(f"Нельзя деактивировать: есть активные подключения ({self._connections})")
-            self._active = False
-            return f"Сервер {self._name} деактивирован"
-        return f"Сервер {self._name} уже неактивен"
-    
-    def is_active(self):
-        """Проверка активности"""
-        return self._active
-    
-    
-    
+    @status.setter
+    def status(self, value):
+        
+        if not validate_status(value):
+            raise ValueError
+
+        self._status = value
+        
     def __str__(self):
-        if self._active:
-            active_status = "АКТИВЕН"
-        else:
-            active_status = "НЕАКТИВЕН" 
-        return (f"{self._name} ({self._ip}) - {self._status} | "
-                f"Подключений: {self._connections} | {active_status}")
+        
+        return f"Имя: {self.name}, Айпи: {self.ip}, Статус: {self.status}, Кол-во соединений: {self.connections}, Доступен/Недоступен: {self.active}"
     
     def __repr__(self):
-        return (f"Server(name='{self._name}', ip='{self._ip}', "
-                f"status='{self._status}', connections={self._connections})")
+        
+        return f"name={self.name}, ip={self.ip}, status={self.status}, connections={self.connections}"
     
-    def __eq__(self, other):
-        if not isinstance(other, Server):
-            return False
-        return (self._ip == other._ip) and (self._name == other._name)
-    
-    #Бизнес метод
-    
+    def __eq__(self, value):
+        
+        if not isinstance(value, Server):
+            return NotImplemented
+
+        return (self.name == value.name
+                and self.ip == value.ip
+                and self.active == value.active
+                and self.connections == value.connections
+                and self.status == value.status) 
     
     def ping(self):
         """Проверка доступности"""
         if not self._active:
             return f"Сервер {self._name} НЕАКТИВЕН, пинг невозможен"
-        return f"Сервер {self._name} отвечает. Статус: {self._status}"
+        return f"Сервер {self._name} отвечает."
     
     def connect(self):
         """Подключение к серверу"""
         if not self._active:
             raise Exception(f"Нельзя подключиться: сервер {self._name} неактивен")
-        if self._status != "online":
+        if self._status != "Online":
             raise Exception(f"Нельзя подключиться: сервер {self._status}")
-        if self._connections >= Server.max_connections:
-            raise Exception(f"Достигнут лимит подключений ({Server.max_connections})")
+        if self._connections >= self._max_connections:
+            raise Exception(f"Достигнут лимит подключений ({self._max_connections})")
         
         self._connections += 1
         return f"Подключено к {self._name}. Текущие подключения: {self._connections}"
@@ -144,15 +125,13 @@ class Server:
         """Перезагрузка сервера"""
         if self._connections > 0:
             raise Exception(f"Нельзя перезагрузить: {self._connections} активных подключений")
-    
+        
         old_status = self._status
-        self._status = "maintenance"
+        self._status = "Maintenance"
     
         #Имитация перезагрузки 
-        import time
         time.sleep(3)  
     
         self._status = old_status
         return f"Сервер {self._name} перезагружен"
     
-object = Server(name="strtr", ip=192.192, connections=3)

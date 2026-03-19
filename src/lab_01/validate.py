@@ -1,36 +1,51 @@
-from model import Server
 
-def validate_name(self, value):
+
+def validate_name(value):
+    """Проверка имени сервера"""
     if not isinstance(value, str):
-        raise TypeError("Имя должно быть строкой")
+        return False
     if not value.strip():
-        raise ValueError("Имя не может быть пустым")
+        return False
+    if len(value) < 3 or len(value) > 50:
+        return False
     return True
-    
-def validate_ip(self, value):
+
+def validate_ip(value):
+    """Проверка IP-адреса"""
     if not isinstance(value, str):
-        raise TypeError("IP должен быть строкой")
+        return False
+    
     parts = value.split('.')
     if len(parts) != 4:
-        raise ValueError("Неверный формат IP")
+        return False
+    
     for part in parts:
-        if not part.isdigit() or not (0 <= int(part) <= 255):
-            raise ValueError("IP должен быть в формате xxx.xxx.xxx.xxx")
+        if not part.isdigit():
+            return False
+        if not (0 <= int(part) <= 255):
+            return False
     return True
-    
-def validate_status(self, value):
-    if not isinstance(value, str):
-        raise TypeError("Статус должен быть строкой")
-    allowed = ["online", "offline", "maintenance"]
-    if value not in allowed:
-        raise ValueError(f"Статус должен быть одним из: {allowed}")
-    return True
-    
-def validate_connections(self, value):
+
+def validate_connections(value):
+    """Проверка количества подключений"""
     if not isinstance(value, (int, float)):
-        raise TypeError("Количество подключений должно быть числом")
+        return False
     if value < 0:
-        raise ValueError("Количество подключений не может быть отрицательным")
-    if value > Server.max_connections:
-        raise ValueError(f"Превышен лимит подключений ({Server.max_connections})")
+        return False
+    if value > 1000:  # максимальный лимит
+        return False
     return True
+
+def validate_status(value):
+    """Проверка статуса сервера"""
+    if not isinstance(value, str):
+        return False
+    
+    allowed = ["Online", "Offline", "Maintenance"]
+    if value not in allowed:
+        return False
+    return True
+
+def validate_active(value):
+    """Проверка активности"""
+    return isinstance(value, bool)
