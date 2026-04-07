@@ -9,7 +9,7 @@ import time
 
 class Server():
     
-    def __init__(self, name: str, ip: int, active: bool, connections: int = 0, status: str = "Offline", max_connections: int = 64):
+    def __init__(self, name: str, ip: str, active: bool, connections: int = 0, status: str = "Offline", max_connections: int = 64):
         
         self._name = name
         self._ip = ip
@@ -135,3 +135,14 @@ class Server():
         self._status = old_status
         return f"Сервер {self._name} перезагружен"
     
+    
+    
+object = Server('asda','123.213.123.123',True, 0,"Offline",54)
+object_2 = Server('sdfghj',"222.222.222.222",True, 0,"Offline",54)
+print(object)
+object.ip = "111.111.111.111"
+object.status = "Online"
+object.connect()
+object_2.connect()
+print(object)
+print(object_2)
