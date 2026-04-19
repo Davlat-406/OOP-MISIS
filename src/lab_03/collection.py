@@ -1,4 +1,5 @@
-from model import Server
+from base import Server
+from models import GameServer, DatabaseServer
 
 
 class ServerCollection:
@@ -155,3 +156,20 @@ class ServerCollection:
                     result.add(server)
         return result
     
+    # Новые методы для ЛР-3
+    
+    def get_by_type(self, server_type):
+        """Вернуть новую коллекцию только с серверами указанного типа"""
+        result = ServerCollection()
+        for server in self._items:
+            if isinstance(server, server_type):
+                result.add(server)
+        return result
+    
+    def get_game_servers(self):
+        """Вернуть только игровые серверы"""
+        return self.get_by_type(GameServer)
+    
+    def get_database_servers(self):
+        """Вернуть только серверы БД"""
+        return self.get_by_type(DatabaseServer)
